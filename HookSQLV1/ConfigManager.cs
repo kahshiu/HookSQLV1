@@ -22,29 +22,40 @@ namespace HookSQLV1
             // on single file, points to config for each directory
             if (File.Exists(superConfigPath))
             {
-                foreach (string configPath in File.ReadLines(superConfigPath))
+                using (StreamReader r = new StreamReader(superConfigPath))
                 {
-                    AddConfig(configPath);
+                    string configPath;
+                    while ((configPath = r.ReadLine()) != null)
+                    {
+                        AddConfig(configPath);
+                    }
                 }
             }
         }
 
         public void AddConfig(string configPath)
         {
-            var temp = new Config(configPath);
+            string[] frags = configPath.Split('|');
+            if (frags.Length != 2) return;
+
+            frags[0] = frags[0].Trim();
+            frags[1] = frags[1].Trim();
+
+            var temp = new Config(frags[1]);
             if (temp.isInit)
             {
-                _configs.Add(configPath, temp);
+                _configs.Add(frags[0], temp);
             }
         }
 
         public Config GetTarget(string svnCWD)
         {
             Config temp = null;
-            string pattern = svnCWD.ToLower();
+            string pattern;
             foreach (KeyValuePair<string, Config> config in _configs)
             {
-                if (Regex.IsMatch(config.Key.ToLower(), pattern))
+                pattern = config.Key.ToLower();
+                if (svnCWD.ToLower().StartsWith(pattern))
                 {
                     temp = config.Value;
                 }
@@ -52,13 +63,13 @@ namespace HookSQLV1
             return temp;
         }
 
-        public string SetTargetInData(string svnCWD,string svnPATH)
+        public string SetTargetInData(string svnCWD,string svnPATH, string targetExt)
         {
             Config temp = GetTarget(svnCWD);
             string dataString = "";
             if(temp != null)
             {
-                dataString = temp.SetInData(svnPATH);
+                dataString = temp.SetInData(svnPATH, targetExt);
             }
             return dataString;
         }

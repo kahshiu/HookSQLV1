@@ -9,32 +9,50 @@ namespace HookSQLV1
     {
         const string BUILD = "pre-commit";
         private static string selfParent;
-        private static int superFlag = -1;
+        private static string targetExt;
+        private static string superConfigFile;
+        private static int superFlag;
         private static ConfigManager CMan;
         //const string NotForRepoMarker = "NOT_FOR_REPO";
 
         static void Main(string[] args)
         {
             selfParent = GetMyParent();
-            CMan = new ConfigManager(args[0]);
+            targetExt = ".cfc";
+            superConfigFile = "super.config";
+            superFlag = -1;
+
+            if(BUILD == "pre-commit")
+            {
+                if (args.Length != 4) Environment.Exit(superFlag);
+            }
+            else if(BUILD == "pre-update")
+            {
+                if (args.Length != 4) Environment.Exit(superFlag);
+            }
+
+            CMan = new ConfigManager(superConfigFile);
 
             if (BUILD == "pre-commit")
             {
-                CMan.SetTargetInData(args[3], args[0]);
+                CMan.SetTargetInData(args[3], args[0], targetExt);
                 superFlag = CMan.RunSqlMana();
             }
 
             //string[] affectedPaths = File.ReadAllLines();
+
             //using (StreamWriter w = new StreamWriter(@"C:\hook_junk\sample.txt"))
+            //using (StreamReader r = new StreamReader(args[0]))
             //{
             //    w.WriteLine("------------------");
-            //    w.WriteLine(x);
-            //    for (int i = 0; i < args.Length; i++)
-            //    {
 
-            //        w.WriteLine(args[i]);
+            //    string svnFilePath;
+            //    while ((svnFilePath = r.ReadLine()) != null)
+            //    {
+            //        w.WriteLine(svnFilePath);
             //    }
             //}
+
             Environment.Exit(superFlag);
         }
 

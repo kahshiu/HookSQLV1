@@ -30,12 +30,21 @@ namespace HookSQLV1
 
         public bool ReadConfigFile(string path)
         {
-            bool hit = false;
+            bool hit,total = false;
+            string line;
+            
             if (File.Exists(path))
             {
-                foreach (string line in File.ReadLines(path)) hit = hit || AssignVar(line);
+                using (StreamReader r = new StreamReader(path))
+                {
+                    while ((line = r.ReadLine()) != null)
+                    {
+                        hit = AssignVar(line);
+                        total = total || hit;
+                    }
+                }
             }
-            return hit;
+            return total;
         }
 
         public bool AssignVar(string line)
@@ -63,30 +72,32 @@ namespace HookSQLV1
         }
 
         // read files for SVN to operate
+        // TODO: check file is in repo
+        // TODO: input in which form? full path/ filename?
         public string SetInData(string svnPATH, string filterExtension = "")
         {
             string temp = "";
-            string targetFile = "";
             if (File.Exists(svnPATH))
             {
                 // scanning lines in svn temp file (contains files to operate on)
-                foreach (string file4Action in File.ReadLines(svnPATH))
+                using (StreamReader r = new StreamReader(svnPATH))
                 {
-                    // each file to act on
-                    if (File.Exists(file4Action))
+                    string path4Action, file4Action, repoFile4Action;
+                    while ((path4Action = r.ReadLine()) != null)
                     {
+                        // filter out irrelevant files
                         if (filterExtension != "")
                         {
-                            targetFile = (Path.GetExtension(file4Action) == filterExtension) ? file4Action : "";
-                        }
-                        else
-                        {
-                            targetFile = file4Action;
+                            if (Path.GetExtension(path4Action) != filterExtension) continue;
                         }
 
-                        if (targetFile != "")
+                        file4Action = Path.GetFileName(path4Action);
+                        repoFile4Action = string.Format(@"{0}/{1}", RepoPath, file4Action);
+
+                        // ensure only file in ssp repo is selected
+                        if (File.Exists(repoFile4Action))
                         {
-                            temp = temp + targetFile + ",";
+                            temp = temp + "," + file4Action;
                         }
                     }
                 }
